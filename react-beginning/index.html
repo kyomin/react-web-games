@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <title>React Beginning</title>
+  </head>
+  <body>
+    <div id="root"></div>   <!-- 결과: <div id="root"><button>Like</button></div> -->
+    <script>
+      const e = React.createElement;  // html DOM 요소를 만들 수 있는 객체
+
+      class LikeButton extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            liked: false
+          }
+        }
+
+        render() {
+          return e(
+            'button', 
+            { onClick: () => { this.setState({ liked: true }) } }, 
+            this.state.liked ? 'Liked' : 'Like'
+          ); // <button>Like</button>
+        }
+      }
+    </script>
+    <script>
+      // 어떤 컴포넌트를 그리겠다고 위에 명시한 것을 리액트가 렌더링해준다.
+      // index html 내의 id가 root인 것에 돔을 삽입한다.
+      ReactDOM.render(e(LikeButton), document.querySelector('#root'));
+    </script>
+  </body>
+</html>
