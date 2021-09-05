@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <!-- Bebel CDN -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <title>구구단</title>
+  </head>
+  <body>
+    <div id="root"></div>   <!-- 결과: <div id="root"><button>Like</button></div> -->
+    <script type="text/babel">
+      class Gugudan extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            first: Math.ceil(Math.random() * 9),
+            second: Math.ceil(Math.random() * 9),
+            value: '',
+            result: ''
+          }
+        }
+
+        componentDidMount() {
+          this.input.focus();
+        }
+
+        onSubmit = (e) => {
+          e.preventDefault();
+
+          if (parseInt(this.state.value) === this.state.first * this.state.second) {
+            // 다음과 같이 이전 상태 값을 이용해 새로운 state 상태 값을 리턴하도록 함수를 정의할 수도 있다.
+            this.setState((prevState) => {
+              return {
+                result: '정답: ' + prevState.value,
+                first: Math.ceil(Math.random() * 9),
+                second: Math.ceil(Math.random() * 9),
+                value: ''
+              }
+            });
+          } else {
+            this.setState({
+              result: '땡',
+              value: ''
+            });
+          }
+
+          this.input.focus();
+        }
+
+        onChange = (e) => {
+          this.setState({ 
+            value: e.target.value 
+          });
+        }
+
+        onRefInput = (c) => { this.input = c; }
+
+        // setState가 실행될 때마다 다시 렌더링된다. => 성능 최적화에 주의할 것
+        render() {
+          return (
+            <React.Fragment> 
+              <div>{this.state.first} 곱하기 {this.state.second}는?</div>
+              <form onSubmit={this.onSubmit}>
+                <input ref={this.onRefInput} type="number" value={this.state.value} onChange={this.onChange} />
+                <button>입력</button>
+              </form>
+              <div>{this.state.result}</div>
+            </React.Fragment>
+          );
+        }
+      }
+    </script>
+    <script type="text/babel">
+      ReactDOM.render(<Gugudan />, document.querySelector('#root'));
+    </script>
+  </body>
+</html>
