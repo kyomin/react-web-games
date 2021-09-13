@@ -1,0 +1,38 @@
+{
+  "name": "react-web-games",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kyomin/react-web-games.git"
+  },
+  "author": "kyomin",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "5.0.1",
+    "eslint-config-prettier": "3.1.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-loader": "2.0.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-jest": "21.24.1",
+    "eslint-plugin-node": "7.0.1",
+    "eslint-plugin-prettier": "2.6.2",
+    "eslint-plugin-promise": "4.0.1",
+    "eslint-plugin-standard": "4.0.0",
+    "eslint-plugin-vue": "5.0.0",
+    "node-sass": "4.11.0",
+    "nodemon": "1.18.9",
+    "prettier": "1.14.3",
+    "prettier-standard": "9.1.1",
+    "pretty-format": "24.8.0",
+    "sass-loader": "7.1.0"
+  },
+  "bugs": {
+    "url": "https://github.com/kyomin/react-web-games/issues"
+  },
+  "homepage": "https://github.com/kyomin/react-web-games#readme"
+}
