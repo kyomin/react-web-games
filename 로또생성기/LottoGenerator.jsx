@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Ball from './Ball';
 
-function getWinNumbers() {
+function getWinNumbers() {  // state 안 쓰는 함수는 외부로 뺀다.
+  console.log('getWinNumbers');
   const candidates = Array(45).fill().map((v, i) => i + 1);
   const shuffle = [];
 
@@ -14,84 +15,78 @@ function getWinNumbers() {
   return [...winNumbers, bonusNumber];
 }
 
-class LottoGenerator extends Component {
-  state = {
-    winNumbers: getWinNumbers(),  // 당첨 숫자들
-    winBalls: [], // 당첨 숫자들에서 보너스 공 제외한 번호들
-    bonus: null,  // 보너스 공
-    redo: false
-  };
+const LottoGenerator = () => {
+  /* 
+    useMemo를 이용해 잠시 캐싱을 한다.
+    이를 이용하면 hooks가 getWinNumbers의 리턴 값을 기억한다.
+    2번째 배열에 넣어준 요소의 값이 바뀌어야지 함수를 다시 실행한다.
+    그래서 state가 변경되어 다시 이 내부가 실행되어도 getWinNumbers 함수는 다시 실행되지 않는다.
+    만일 2번째 배열의 요소가 state로서 변하게 되면 그때서야 다시 실행한다.
+  */
+  const lottoNumbers = useMemo(() => getWinNumbers(), []);
+  const [winNumbers, setWinNumbers] = useState(lottoNumbers);
+  const [winBalls, setWinBalls] = useState([]);
+  const [bonus, setBonus] = useState(null);
+  const [redo, setRedo] = useState(false);
+  const timeouts = useRef([]);
 
-  timeouts = [];
-
-  runGenerator = () => {
-    const { winNumbers } = this.state;
+  useEffect(() => {
+    console.log('useEffect');
     for (let i = 0; i < winNumbers.length - 1; i++) {
-      this.timeouts[i] = setTimeout(() => {
-        this.setState((prevState) => {
-          return {
-            winBalls: [...prevState.winBalls, winNumbers[i]]
-          }
-        });
+      timeouts.current[i] = setTimeout(() => {
+        setWinBalls((prevBalls) => [...prevBalls, winNumbers[i]]);
       }, (i + 1) * 1000);
     }
 
-    this.timeouts[6] = setTimeout(() => {
-      this.setState({
-        bonus: winNumbers[6],
-        redo: true
-      });
+    timeouts.current[6] = setTimeout(() => {
+      setBonus(winNumbers[6]);
+      setRedo(true);
     }, 7000);
-  };
 
-  componentDidMount() {
-    this.runGenerator();
-  }
+    // componentWillUnmount
+    return () => {
+      timeouts.current.forEach((v) => {
+        clearTimeout(v);
+      });
+    };
+  }, [timeouts.current]);   // 2번째 인자가 빈 배열이면 componentDidMount와 동일. 배열에 요소가 있으면 componentDidMount와 componentDidUpdate 둘 다 수행
+  // 만일 componentDidUpdate용으로 쓸 state가 여러 개이면 useEffect를 여러 개 실행해도 된다.
 
-  componentDidUpdate(prevProps, prevState) {
-    /* 
-      이 라이프사이클에서는 조건문이 중요하다.
-      어떤 props, 어떤 state가 바뀌었을 때 실행될 것을 명시해야 할 것이 권장된다.
-      아니면 무작위의 state나 props가 변경되었을 때 내부 로직이 항상 실행될 것이다.
-    */
-    if (this.state.winBalls.length === 0) {
-      this.runGenerator();
-    }
-  }
-  
-  componentWillUnmount() {
-    this.timeouts.forEach((v) => {
-      clearTimeout(v);
-    });
-  }
+  /* 
+    useCallback을 이용해 함수가 다시 정의되는 것을 막는다.
+    hooks에서 state가 변하게 되면 위에서부터 hooks 함수 내부가 다시 실행 되는데,
+    useCallback을 이용하면 다시 정의되는 것을 막을 수 있다(함수 자체를 기억한다).
+    그래서 props로 이 함수를 넘길 때 유용하다.
+    만일 이를 사용하지 않고서 자식에게 props로 넘기게 되면
+    부모의 state가 변해서 해당 함수를 다시 정의하게 되면 props를 받는 자식 입장에서도
+    같은 함수 내용인데도 새로운 props를 받았다고 인지해 버린다.
 
-  onClickRedo = () => {
+    하지만 이 내부에서 state를 사용할 시에는 2번째 인자로 해당 state를 넣어준다.
+    안 그러면 처음의 state를 계속 기억하고 있어서
+    해당 함수가 호출되면 state가 변한 state가 아니라 처음의 state만 기억하고 있는다.
+  */
+  const onClickRedo = useCallback(() => {
     // 초기화
-    this.setState({
-      winNumbers: getWinNumbers(),
-      winBalls: [],
-      bonus: null,
-      redo: false
-    });
+    console.log('onClickRedo');
+    console.log('winNumbers : ', winNumbers);
+    setWinNumbers(getWinNumbers());
+    setWinBalls([]);
+    setBonus(null);
+    setRedo(false);
+    timeouts.current = [];
+  }, [winNumbers]);
 
-    this.timeouts = [];
-  }
-
-  render() {
-    const { winBalls, bonus, redo } = this.state;
-
-    return (
-      <>
-        <div>당첨 숫자</div>
-        <div id="결과창">
-          {winBalls.map((v) => <Ball key={v} number={v} />)}
-        </div>
-        <div>보너스</div>
-        {bonus && <Ball number={bonus} />}
-        {redo && <button onClick={this.onClickRedo}>한 번 더!</button>}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <div>당첨 숫자</div>
+      <div id="결과창">
+        {winBalls.map((v) => <Ball key={v} number={v} />)}
+      </div>
+      <div>보너스</div>
+      {bonus && <Ball number={bonus} />}
+      {redo && <button onClick={onClickRedo}>한 번 더!</button>}
+    </>
+  );
+};
 
 export default LottoGenerator;
