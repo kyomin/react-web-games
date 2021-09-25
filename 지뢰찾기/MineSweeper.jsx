@@ -85,7 +85,32 @@ const reducer = (state, action) => {
       // 불변성 유지를 위해 Array 데이터를 깊은 복사해준다.
       const tableData = [...state.tableData];
       tableData[action.row] = [...state.tableData[action.row]];
-      tableData[action.row][action.cell] = CODE.OPENED;
+      
+      // 상하좌우 및 대각선 지뢰 개수 검사 후 표시 작업
+      let around = [];
+      if (tableData[action.row-1]) {  // 윗 칸이 존재하는 경우
+        around = around.concat(
+          tableData[action.row-1][action.cell-1],
+          tableData[action.row-1][action.cell],
+          tableData[action.row-1][action.cell+1]
+        );
+      }
+
+      around = around.concat( // 자기 행의 좌우 칸
+        tableData[action.row][action.cell-1],
+        tableData[action.row][action.cell+1]
+      );
+
+      if (tableData[action.row+1]) {  // 아랫 칸이 존재하는 경우
+        around = around.concat(
+          tableData[action.row+1][action.cell-1],
+          tableData[action.row+1][action.cell],
+          tableData[action.row+1][action.cell+1]
+        );
+      }
+
+      const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;
+      tableData[action.row][action.cell] = count;
 
       return {
         ...state,
