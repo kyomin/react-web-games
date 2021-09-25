@@ -25,6 +25,43 @@ const initialState = {
   result: ''
 };
 
+const plantMine = (row, cell, mine) => {
+  console.log(row, cell, mine);
+
+  // 0 <= x < (row*cell)의 정수 채우기
+  const size = row * cell;
+  const candidate = Array(size).fill().map((arr, i) => {
+    return i;
+  });
+  const shuffle = [];
+  while(candidate.length > (row * cell) - mine) {
+    const chosen = candidate.splice(Math.floor(Math.random() * candidate.length), 1)[0];
+    shuffle.push(chosen);
+  }
+
+  // code.NORMAL로 셋팅된 2차원 배열 만들기
+  const data = [];
+  for (let i=0; i<row; i++) {
+    const rowData = [];
+    data.push(rowData);
+
+    for(let j=0; j<cell; j++) {
+      rowData.push(CODE.NORMAL);
+    }
+  }
+
+  // shuffle에 랜덤으로 뽑은 위치에 지뢰 심기
+  for (let k=0; k<shuffle.length; k++) {
+    const r = Math.floor(shuffle[k] / cell);
+    const c = shuffle[k] % cell;
+
+    data[r][c] = CODE.MINE;
+  }
+
+  console.log(data);
+  return data;
+};
+
 export const START_GAME = 'START_GAME';
 
 const reducer = (state, action) => {
@@ -56,7 +93,7 @@ const MineSweeper = () => {
 
   return (
     // 이 안에 묶인 컴포넌트에서 다이렉트로 현 컴포넌트의 데이터에 접근할 수 있게 된다.
-    <TableContext.Provider value={{ tableData: state.tableData, dispatch }}>
+    <TableContext.Provider value={value}>
       <Form />
       <div>{state.timer}</div>
       <Table />

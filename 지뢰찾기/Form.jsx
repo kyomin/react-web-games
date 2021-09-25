@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext } from 'react';
-import { TableContext } from './MineSweeper';
+import { TableContext, START_GAME } from './MineSweeper';
 
 const Form = () => {
   const [row, setRow] = useState(10);
@@ -20,13 +20,19 @@ const Form = () => {
   }, []);
 
   const onClickBtn = useCallback(() => {
+    // 지뢰 개수가 배열 전체 칸의 개수보다 많은 예외 처리
+    if (mine > (row*cell)) {
+      alert('지뢰 개수가 칸의 개수보다 많을 수 없습니다!');
+      return;
+    }
+
     dispatch({ type: START_GAME, row, cell, mine });
   }, [row, cell, mine]);
 
   return (
     <div>
       <input type="number" placeholder="세로" value={row} onChange={onChangeRow} />
-      <input type="number" placeholder="가로" value={cell}} onChange={onChangeCell} />
+      <input type="number" placeholder="가로" value={cell} onChange={onChangeCell} />
       <input type="number" placeholder="지뢰" value={mine} onChange={onChangeMine} />
       <button onClick={onClickBtn}>시작</button>
     </div>
