@@ -84,33 +84,79 @@ const reducer = (state, action) => {
     case OPEN_CELL: {
       // 불변성 유지를 위해 Array 데이터를 깊은 복사해준다.
       const tableData = [...state.tableData];
-      tableData[action.row] = [...state.tableData[action.row]];
-      
-      // 상하좌우 및 대각선 지뢰 개수 검사 후 표시 작업
-      let around = [];
-      if (tableData[action.row-1]) {  // 윗 칸이 존재하는 경우
-        around = around.concat(
-          tableData[action.row-1][action.cell-1],
-          tableData[action.row-1][action.cell],
-          tableData[action.row-1][action.cell+1]
+      tableData.forEach((row, i) => {
+        tableData[i] = [...state.tableData[i]];
+      });
+
+      const checked = [];   // 탐색 기록들 캐싱
+      const checkArround = (row, cell) => {
+        console.log('checkArround ', row, cell);
+        // 더 이상 탐색을 안 하는 조건 
+        if ([CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE].includes(tableData[row][cell])) {
+          return;
+        }
+        if (row < 0 || row >= tableData.length || cell < 0  || cell >= tableData[0].length) {
+          return;
+        }
+
+        if (checked.includes(row + '/' + cell)) { // 이미 탐색한 곳이면
+          return;
+        } else {
+          checked.push(row + '/' + cell);
+        }
+
+        // 상하좌우 및 대각선 지뢰 개수 검사 후 표시 작업
+        let around = [];
+        if (tableData[row-1]) {  // 윗 칸이 존재하는 경우
+          around = around.concat(
+            tableData[row-1][cell-1],
+            tableData[row-1][cell],
+            tableData[row-1][cell+1]
+          );
+        }
+
+        around = around.concat( // 자기 행의 좌우 칸
+          tableData[row][cell-1],
+          tableData[row][cell+1]
         );
-      }
 
-      around = around.concat( // 자기 행의 좌우 칸
-        tableData[action.row][action.cell-1],
-        tableData[action.row][action.cell+1]
-      );
+        if (tableData[row+1]) {  // 아랫 칸이 존재하는 경우
+          around = around.concat(
+            tableData[row+1][cell-1],
+            tableData[row+1][cell],
+            tableData[row+1][cell+1]
+          );
+        }
 
-      if (tableData[action.row+1]) {  // 아랫 칸이 존재하는 경우
-        around = around.concat(
-          tableData[action.row+1][action.cell-1],
-          tableData[action.row+1][action.cell],
-          tableData[action.row+1][action.cell+1]
-        );
-      }
+        const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;
+        tableData[row][cell] = count;
 
-      const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;
-      tableData[action.row][action.cell] = count;
+        // 주변 모든 칸이 빈 칸이면 재귀적으로 열어주기
+        if (count === 0) {
+          const near = [];
+          if (row - 1 > -1) {
+            near.push([row-1, cell-1]);
+            near.push([row-1, cell]);
+            near.push([row-1, cell+1]);
+          }
+          near.push([row, cell-1]);
+          near.push([row, cell+1]);
+          if (row + 1 < tableData.length) {
+            near.push([row+1, cell-1]);
+            near.push([row+1, cell]);
+            near.push([row+1, cell+1]);
+          }
+
+          near.forEach((n) => {
+            // 빈 칸이면서 아직 열지 않은 칸이면 탐색 대상이다.
+            if (tableData[n[0]][n[1]] < CODE.OPENED) {
+              checkArround(n[0], n[1]);
+            }
+          });
+        }
+      };
+
+      checkArround(action.row, action.cell);
 
       return {
         ...state,
