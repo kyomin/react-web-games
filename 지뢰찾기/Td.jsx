@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useMemo, useCallback, useContext, memo } from 'react';
 import { TableContext, CODE, OPEN_CELL, CLICK_MINE, FLAG_CELL, QUESTION_CELL, NORMALIZE_CELL } from './MineSweeper';
 
 const getTdStyle = (code) => {
@@ -37,11 +37,9 @@ const getTdStyle = (code) => {
 
 const getTdText = (code) => {
   switch (code) {
-    case CODE.NORMAL: {
-      return '';
-    }
+    case CODE.NORMAL:
     case CODE.MINE: {
-      return 'X';
+      return '';
     }
     case CODE.CLICKED_MINE: {
       return '펑!';
@@ -60,7 +58,7 @@ const getTdText = (code) => {
   }
 };
 
-const Td = ({ rowIndex, cellIndex }) => {
+const Td = memo(({ rowIndex, cellIndex }) => {
   const { tableData, dispatch, halted } = useContext(TableContext);
 
   const onClickTd = useCallback(() => {
@@ -119,7 +117,11 @@ const Td = ({ rowIndex, cellIndex }) => {
     }
   }, [tableData[rowIndex][cellIndex], halted]);
 
-  return (
+  /* 
+    Context API를 사용하게 되면 Td 함수가 다시 실행되는 것은 어쩔 수 없다.
+    그래서 이 내부에서 렌더링 부분만 useMemo로 따로 캐싱해서 방지한다.
+  */
+  return useMemo(() => (
     <td 
       style={getTdStyle(tableData[rowIndex][cellIndex])}
       onClick={onClickTd}
@@ -127,7 +129,7 @@ const Td = ({ rowIndex, cellIndex }) => {
     >
       {getTdText(tableData[rowIndex][cellIndex])}
     </td>
-  );
-};
+  ), [tableData[rowIndex][cellIndex]]);
+});
 
 export default Td;

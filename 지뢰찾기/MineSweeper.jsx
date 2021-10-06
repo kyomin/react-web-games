@@ -278,6 +278,8 @@ const MineSweeper = () => {
       timer = setInterval(() => {
         dispatch({ type: INCREMENT_TIMER });
       }, 1000);
+    } else {
+      clearInterval(timer);
     }
 
     // componentWillUnmount
