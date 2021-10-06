@@ -1,4 +1,4 @@
-import React, { useReducer, createContext, useMemo } from 'react';
+import React, { useEffect, useReducer, createContext, useMemo } from 'react';
 import Table from './Table';
 import Form from './Form';
 
@@ -22,9 +22,15 @@ export const TableContext = createContext({
 
 const initialState = {
   tableData: [],
+  data: {
+    row: 0, 
+    cell: 0, 
+    mine: 0
+  },
   timer: 0,
   result: '',
-  halted: true
+  halted: true,
+  openedCount: 0
 };
 
 const plantMine = (row, cell, mine) => {
@@ -71,14 +77,22 @@ export const CLICK_MINE = 'CLICK_MINE';
 export const FLAG_CELL = 'FLAG_CELL';
 export const QUESTION_CELL = 'QUESTION_CELL';
 export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+export const INCREMENT_TIMER = 'INCREMENT_TIMER';
 
 const reducer = (state, action) => {
   switch (action.type) {
     case START_GAME: {
       return {
         ...state,
+        data: {
+          row: action.row, 
+          cell: action.cell, 
+          mine: action.mine
+        },
+        openedCount: 0,
         tableData: plantMine(action.row, action.cell, action.mine),
-        halted: false
+        halted: false,
+        timer: 0
       };
     }
     case OPEN_CELL: {
@@ -89,6 +103,7 @@ const reducer = (state, action) => {
       });
 
       const checked = [];   // 탐색 기록들 캐싱
+      let openedCount = 0;
       const checkArround = (row, cell) => {
         console.log('checkArround ', row, cell);
         // 더 이상 탐색을 안 하는 조건 
@@ -104,7 +119,8 @@ const reducer = (state, action) => {
         } else {
           checked.push(row + '/' + cell);
         }
-
+        
+        openedCount+=1;
         // 상하좌우 및 대각선 지뢰 개수 검사 후 표시 작업
         let around = [];
         if (tableData[row-1]) {  // 윗 칸이 존재하는 경우
@@ -158,9 +174,20 @@ const reducer = (state, action) => {
 
       checkArround(action.row, action.cell);
 
+      // 승리 조건 체크
+      let halted = false;
+      let result = '';
+      if (state.data.row*state.data.cell-state.data.mine === state.openedCount + openedCount) {
+        halted = true;
+        result = `${state.timer}초만에 승리하셨습니다`;
+      }
+
       return {
         ...state,
-        tableData
+        tableData,
+        openedCount: state.openedCount + openedCount,
+        halted,
+        result
       };
     }
     case CLICK_MINE: {
@@ -219,6 +246,12 @@ const reducer = (state, action) => {
         tableData
       };
     }
+    case INCREMENT_TIMER: {
+      return {
+        ...state,
+        timer: state.timer+1
+      }
+    }
     default: {
       return state;
     }
@@ -239,8 +272,22 @@ const MineSweeper = () => {
   */
   const value = useMemo(() => ({ tableData, halted, dispatch }), [tableData, halted]);
 
+  useEffect(() => {
+    let timer;
+    if (halted === false) {
+      timer = setInterval(() => {
+        dispatch({ type: INCREMENT_TIMER });
+      }, 1000);
+    }
+
+    // componentWillUnmount
+    return () => {
+      clearInterval(timer);
+    }
+  }, [halted]);
+
   return (
-    // 이 안에 묶인 컴포넌트에서 다이렉트로 현 컴포넌트의 데이터에 접근할 수 있게 된다.
+    // 이 안에 묶인 자식 컴포넌트에서 다이렉트로 현 컴포넌트의 데이터에 접근할 수 있게 된다(복잡한 props 전달의 단점 해결).
     <TableContext.Provider value={value}>
       <Form />
       <div>{timer}</div>
